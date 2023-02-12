@@ -14,42 +14,26 @@ const io = new Server(server, {cors: {
     methods: ["GET", "POST"]
 }});
 
-// Mapping of users to their rooms. Socket IDs => game IDs.
-const rooms = new Map();
-
-function new_room(gameID, list_of_users) {
-    for (let i = 0; i < list_of_users.length; i++) {
-        rooms.set(list_of_users[i], gameID);
-    }
-}
-
-function remove_room(gameID) {
-    rooms.delete(gameID);
-}
-
-function get_room(user){
-    return this.socket.id
-}
+const games = {};
+const sockets = {};
 
 io.on("connection", (socket) => {
-    socket.on("new_room", function(data){
-        socket.join("gameID");
-    });
+    socket.on("join", ({gameID}) => {
+        if (!games[gameID]) games[gameID] = [socket.id]
+        else if (!games[gameID].includes(socket.id)) games[gameID].push(socket.id)
+        sockets[socket.id] = socket
+        console.log(`${socket.id} joined game ${gameID}`);
+        console.log(games);
+    })
 
-    socket.on("user_join", function(data) {
-        this.username = data;
-        socket.to(rooms.get(get_room(this))).emit("user_join", data);
-    });
-
-    socket.on("new_position", function(data) {
-        data.username = this.username;
-        socket.to(rooms.get(get_room(this))).emit("new_position", data);
-    });
-
-    socket.on("perk_activated", function(data) {
-        data.username = this.username;
-        socket.to(rooms.get(get_room(this))).emit("perk_activated", data);
-    });
+    socket.on("request_position_update", (data) => {
+        if (!games[data.gameID]) return
+        games[data.gameID].forEach(playerID => {
+            if (playerID == data.id) return;
+            sockets[playerID].emit("position_update", {x: -data.data.x, y: data.data.y})
+        });
+        console.log("DATA:", data)
+    })
 });
 
 server.listen(PORT, function() {
