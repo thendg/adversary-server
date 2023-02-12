@@ -28,7 +28,7 @@ function remove_room(gameID) {
     rooms.delete(gameID);
 }
 
-function get_room(user): string{
+function get_room(user){
     return this.socket.id
 }
 
