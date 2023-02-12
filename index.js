@@ -3,17 +3,16 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from "cors";
 
+const PORT = process.env.PORT || 4000;
+
 const app = express();
-app.use(
-    cors({
-        origin: 'http://localhost:3000',
-        methods: ["GET", "POST"],
-        credentials: true,
-    })
-)
+app.use(cors());
+
 const server = createServer(app);
-const io = new Server(server);
-const port = process.env.PORT || 3000;
+const io = new Server(server, {cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+}});
 
 // Mapping of users to their rooms. Socket IDs => game IDs.
 const rooms = new Map();
@@ -33,7 +32,6 @@ function get_room(user){
 }
 
 io.on("connection", (socket) => {
-
     socket.on("new_room", function(data){
         socket.join("gameID");
     });
@@ -54,6 +52,6 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(port, function() {
-    console.log("Listening on *:" + port);
+server.listen(PORT, function() {
+    console.log("Listening on *:" + PORT);
 });
